@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Последние обновления на сайте{% endblock %}
+  {% block content %}
+  <h1>
+    Последние обновления на сайте
+  </h1>
+      {% for post in page_obj %}
+        {% include 'posts/post1.html'%}
+      {% empty %}
+      <p>Постов нет</p>
+    {% endfor %}
+    {% include 'includes/paginator.html' %}
+  {% endblock %}
+
+

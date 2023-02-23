@@ -1,0 +1,24 @@
+{% extends "base_form.html" %}
+{% block title %}
+{% if is_edit %}
+    Редактировать
+  {% else %}
+    Новый пост
+  {% endif %}
+{% endblock %}
+
+{% block header %}
+  {% if is_edit %}
+   Редактировать
+  {% else %}
+    Новый пост
+  {% endif %}
+{% endblock %}
+
+{% block button_title %}
+  {% if is_edit %}
+    Сохранить
+  {% else %}
+    Добавить
+  {% endif %}
+{% endblock %}
