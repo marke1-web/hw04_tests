@@ -1,5 +1,6 @@
+from django.urls import reverse
 from django.test import TestCase, Client
-
+from http import HTTPStatus
 from ..models import Post, Group, User
 
 
@@ -20,11 +21,11 @@ class PostURLTests(TestCase):
 
         """Статус коды"""
         cls.status_code_url_names = {
-            "/": 200,
-            f"/group/{cls.group.slug}/": 200,
-            f"/profile/{cls.post.author.username}/": 200,
-            f"/posts/{cls.post.pk}/": 200,
-            "/unexisting_page/": 404,
+            "/",
+            f"/group/{cls.group.slug}/",
+            f"/profile/{cls.post.author.username}/",
+            f"/posts/{cls.post.pk}/",
+            "/unexisting_page/",
         }
 
         """Шаблоны по адресам"""
@@ -43,13 +44,6 @@ class PostURLTests(TestCase):
         self.authorized_client.force_login(PostURLTests.user_auth)
         self.author_client = Client()
         self.author_client.force_login(PostURLTests.user_author)
-
-    def test_not_auth_url_exists_at_desired_location(self):
-        """Проверка работы общедоступных страниц"""
-        for address, status_code in self.status_code_url_names.items():
-            with self.subTest(address=address):
-                response = self.guest_client.get(address)
-                self.assertEqual(response.status_code, status_code)
 
     def test_post_create_url_redirect_anonymous_on_auth_login(self):
         """Страница по адресу /create/ перенаправит анонимного
@@ -80,7 +74,7 @@ class PostURLTests(TestCase):
         пользователю
         """
         response = self.authorized_client.get("/create/")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_post_edit_url_redirect_authorizied_on_post_detail(self):
         """Страница по адресу /post/<int:post_id>/edit/ перенаправит авторизван
@@ -98,15 +92,99 @@ class PostURLTests(TestCase):
         response = self.author_client.get(
             f"/posts/{PostURLTests.post.pk}/edit/"
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_uses_correct_template(self):
         """Проверка использования URl адреса к шаблонам"""
-        # templates_url_names = ()
+
         for address, template in self.templates_url_names.items():
             with self.subTest(address=address):
                 response = self.author_client.get(address)
                 self.assertTemplateUsed(response, template)
+
+    def test_urls_author_status_code(self):
+        """Проверка автора"""
+        status_code_url = {
+            reverse('posts:index'): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': self.group.slug}): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': 'bad_slug'}): HTTPStatus.NOT_FOUND,
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.user_author}): HTTPStatus.OK,
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
+            reverse(
+                'posts:post_create'): HTTPStatus.OK,
+            '/unexisting_page/': HTTPStatus.NOT_FOUND,
+        }
+        for url, response_code in status_code_url.items():
+            with self.subTest(url=url):
+                status_code = self.author_client.get(url).status_code
+                self.assertEqual(status_code, response_code)
+
+    def test_urls_author_status_code(self):
+        """Проверка авториз пользователя"""
+        status_code_url = {
+            reverse('posts:index'): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': self.group.slug}): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': 'bad_slug'}): HTTPStatus.NOT_FOUND,
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.user_author}): HTTPStatus.OK,
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): HTTPStatus.FOUND,
+            reverse(
+                'posts:post_create'): HTTPStatus.OK,
+            '/unexisting_page/': HTTPStatus.NOT_FOUND,
+        }
+        for url, response_code in status_code_url.items():
+            with self.subTest(url=url):
+                status_code = self.authorized_client.get(url).status_code
+                self.assertEqual(status_code, response_code)
+
+    def test_urls_author_status_code(self):
+        """Проверка  не авториз пользователя"""
+        status_code_url = {
+            reverse('posts:index'): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': self.group.slug}): HTTPStatus.OK,
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': 'bad_slug'}): HTTPStatus.NOT_FOUND,
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.user_author}): HTTPStatus.OK,
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}): HTTPStatus.OK,
+            reverse(
+                'posts:post_edit',
+                kwargs={'post_id': self.post.id}): HTTPStatus.FOUND,
+            reverse(
+                'posts:post_create'): HTTPStatus.FOUND,
+            '/unexisting_page/': HTTPStatus.NOT_FOUND,
+        }
+        for url, response_code in status_code_url.items():
+            with self.subTest(url=url):
+                status_code = self.guest_client.get(url).status_code
+                self.assertEqual(status_code, response_code)
 
     class StaticURLTests(TestCase):
         def setUp(self):
@@ -114,4 +192,4 @@ class PostURLTests(TestCase):
 
         def test_homepage(self):
             responce = self.guest_client.get("/")
-            self.assertEqual(responce.status_code, 200)
+            self.assertEqual(responce.status_code, HTTPStatus.OK)

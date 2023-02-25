@@ -2,6 +2,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
 
+from ..utils import POST_COUNT_PER_PAGE
 from ..models import Post, Group, User
 
 
@@ -137,3 +138,56 @@ class PostPagesTests(TestCase):
                 response = self.authorized_client.get(value)
                 form_field = response.context["page_obj"]
                 self.assertNotIn(expected, form_field)
+
+    class PostPaginsTests(TestCase):
+        @classmethod
+        def setUpClass(cls):
+            super().setUpClass()
+            cls.user = User.objects.create(username="Nonename")
+            cls.group = Group.objects.create(
+                title="Тестовая группа",
+                slug="test-slug",
+                description="Тестовое описание",
+            )
+            cls.post = [
+                Post(
+                    author=cls.user,
+                    text=f"Любой текст {i}",
+                    group=cls.group,
+                )
+                for i in range(12)
+            ]
+            Post.objects.bulk_create(cls.post)
+
+        def setUp(self):
+            self.authorized_client = Client()
+            self.authorized_client.force_login(PostPagesTests.user)
+
+        def test_check_pagin_pages(self):
+            first_page = POST_COUNT_PER_PAGE
+            second_page = 2
+            pagin_urls = [
+                reverse("posts:index"),
+                reverse("posts:group_list", kwargs={"slug": self.group.slug}),
+                reverse(
+                    "posts:profile", kwargs={"username": self.user.username}
+                ),
+            ]
+            for page in pagin_urls:
+                with self.subTest(page=page):
+                    self.assertEqual(
+                        len(
+                            self.authorized_client.get(page).context.get(
+                                "page_obj"
+                            )
+                        ),
+                        first_page,
+                    )
+                    self.assertEqual(
+                        len(
+                            self.authorized_client.get(page)
+                            .context.get(page + "?page=1")
+                            .context.get("page_obj")
+                        ),
+                        second_page,
+                    )
