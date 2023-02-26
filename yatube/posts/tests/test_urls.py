@@ -18,16 +18,6 @@ class PostURLTests(TestCase):
         cls.post = Post.objects.create(
             text="Тестовый пост", author=cls.user_author, group=cls.group
         )
-
-        """Статус коды"""
-        cls.status_code_url_names = {
-            "/",
-            f"/group/{cls.group.slug}/",
-            f"/profile/{cls.post.author.username}/",
-            f"/posts/{cls.post.pk}/",
-            "/unexisting_page/",
-        }
-
         """Шаблоны по адресам"""
         cls.templates_url_names = {
             "/": "posts/index.html",

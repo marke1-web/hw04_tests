@@ -49,20 +49,23 @@ class PostFormTests(TestCase):
             reverse("posts:post_detail", kwargs={"post_id": self.post.id}),
         )
         self.assertEqual(Post.objects.count(), posts_count)
-        self.assertTrue(Post.objects.filter(text="Изменяем текст").exists())
+        self.assertTrue(
+            Post.objects.filter(
+                text="Изменяем текст", group=self.group.id
+            ).exists()
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_post_edit_not_create_guest_client(self):
-        """Валидная форма не изменит запись в Post если неавторизован."""
-        self.post = Post.objects.create(
-            author=self.user,
-            text="Тестовый текст",
-        )
-        self.group = Group.objects.create(
+    @classmethod
+    def setUpClass(cls):
+        cls.group = Group.objects.create(
             title="Тестовая группа",
             slug="test-slug",
             description="Тестовое описание",
         )
+
+    def test_post_edit_not_create_guest_client(self):
+        """Валидная форма не изменит запись в Post если неавторизован."""
         posts_count = Post.objects.count()
         form_data = {"text": "Изменяем текст", "group": self.group.id}
         response = self.guest_client.post(
