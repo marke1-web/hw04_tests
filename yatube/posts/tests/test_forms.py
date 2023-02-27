@@ -20,6 +20,11 @@ class PostFormTests(TestCase):
             author=cls.user,
             text="Тестовый текст",
         )
+        cls.group = Group.objects.create(
+            title="Тестовая группа",
+            slug="test-slug",
+            description="Тестовое описание",
+        )
 
     def test_create_post(self):
         """Валидная форма создает запись в Post."""
@@ -55,14 +60,6 @@ class PostFormTests(TestCase):
             ).exists()
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    @classmethod
-    def setUpClass(cls):
-        cls.group = Group.objects.create(
-            title="Тестовая группа",
-            slug="test-slug",
-            description="Тестовое описание",
-        )
 
     def test_post_edit_not_create_guest_client(self):
         """Валидная форма не изменит запись в Post если неавторизован."""
