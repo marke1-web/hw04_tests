@@ -30,19 +30,24 @@ class PostURLTests(TestCase):
         """Страница по адресу /create/ перенаправит анонимного
         пользователя на страницу логина
         """
-        response = self.guest_client.get("/create/", follow=True)
+        response = self.guest_client.get(
+            reverse("posts:post_create"), follow=True
+        )
         self.assertRedirects(response, "/auth/login/?next=/create/")
 
     def test_post_post_create_url_redirect_anonymous_on_auth_login(self):
         """Страница по адресу /post/<int:post_id>/edit/> перенаправялет аноним
         пользователя на страницу логина
         """
-        response = self.guest_client.get("/create/", follow=True)
+        response = self.guest_client.get(
+            reverse("posts:post_create"), follow=True
+        )
         self.assertRedirects(response, "/auth/login/?next=/create/")
 
     def test_post_post_edit_url_redirect_anonymous_on_auth_login(self):
         response = self.guest_client.get(
-            f"/posts/{PostURLTests.post.pk}/edit/", follow=True
+            reverse("posts:post_edit", args=(PostURLTests.post.pk,)),
+            follow=True,
         )
         self.assertRedirects(
             response,
@@ -62,7 +67,8 @@ class PostURLTests(TestCase):
         пользователя на страницу поста
         """
         response = self.authorized_client.get(
-            f"/posts/{PostURLTests.post.pk}/edit/", follow=True
+            reverse("posts:post_edit", args=(PostURLTests.post.pk,)),
+            follow=True,
         )
         self.assertRedirects(response, (f"/posts/{PostURLTests.post.pk}/"))
 
@@ -102,7 +108,7 @@ class PostURLTests(TestCase):
                 status_code = self.author_client.get(url).status_code
                 self.assertEqual(status_code, response_code)
 
-    def test_urls_author_status_code(self):
+    def test_urls_user_authorization(self):
         """Проверка авториз пользователя"""
         status_code_url = {
             reverse("posts:index"): HTTPStatus.OK,
@@ -161,5 +167,5 @@ class PostURLTests(TestCase):
             self.guest_client = Client()
 
         def test_homepage(self):
-            responce = self.guest_client.get("/")
+            responce = self.guest_client.get(reverse("posts:index"))
             self.assertEqual(responce.status_code, HTTPStatus.OK)
