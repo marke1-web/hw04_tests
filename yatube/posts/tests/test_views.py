@@ -91,6 +91,7 @@ class PostPagesTests(TestCase):
         form_fields = {
             "text": forms.fields.CharField,
             "group": forms.models.ModelChoiceField,
+            "image": forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -103,6 +104,7 @@ class PostPagesTests(TestCase):
         form_fields = {
             "text": forms.fields.CharField,
             "group": forms.models.ModelChoiceField,
+            "image": forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -191,3 +193,22 @@ class PostPagesTests(TestCase):
                         ),
                         second_page,
                     )
+
+        def test_new_and_edit_post_page_context(self):
+            """Шаблоны сформированы с правильным контекстом."""
+
+            urls = [
+                reverse("posts:post_create"),
+                reverse("posts:post_edit", args=("1")),
+            ]
+            form_fields = {
+                "text": forms.fields.CharField,
+                "group": forms.fields.ChoiceField,
+                "image": forms.fields.ImageField,
+            }
+            for url in urls:
+                with self.subTest(url=url):
+                    response = self.authorized_client.get(url)
+                    for value, expected in form_fields.items():
+                        form_field = response.context["form"].fields.get(value)
+                        self.assertIsInstance(form_field, expected)

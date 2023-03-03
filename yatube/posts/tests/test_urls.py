@@ -169,3 +169,10 @@ class PostURLTests(TestCase):
         def test_homepage(self):
             responce = self.guest_client.get(reverse("posts:index"))
             self.assertEqual(responce.status_code, HTTPStatus.OK)
+
+
+class ViewTestClass(TestCase):
+    def test_error_page(self):
+        response = self.client.get("/nonexist-page/")
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "core/404.html")
